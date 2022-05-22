@@ -1,0 +1,276 @@
+﻿<html align="center" style="font-family:arial;color:white;cursor:default" leftmargin=0 topmargin=0 οncοntextmenu='return false' οndragstart='return false' onselectstart ='return false' οnselect='document.selection.empty()' οncοpy='document.selection.empty()' onbeforecopy='return false' οnmοuseup='document.selection.empty()' ondragstart="return false;" oncontextmenu="return false;"><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"><meta charset="utf-8">
+<title>-</title><script src="https://wow.techbrood.com/libs/jquery/jquery-1.11.1.min.js"></script>
+<div id="app">
+    <transition v-on:enter="enter" v-bind:css="false" appear>
+        <div class="butter-cheese-eggs" v-show="true">
+            <div v-for="(block, index) in grid" @click="select(index)">
+                <block :figure.sync="block.figure" />
+            </div>
+        </div>
+    </transition>
+
+    <transition v-on:enter="enterWin" v-bind:css="false">
+        <win v-show="winner" :click-handler="restart"></win>
+    </transition>
+</div>
+
+<template id="block">
+    <div class="block">
+        <transition v-on:enter="enter" v-bind:css="false">
+            <span v-show="figure > -1">{{ fig }}</span>
+        </transition>
+    </div>
+</template>
+
+<template id="win">
+    <div class="win">
+        <h2>Win</h2>
+        <!--<button @click="clickHandler">Play again</button>-->
+    </div>
+</template>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.3/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.15.0/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.0/TweenMax.min.js"></script>
+<script>'use strict';
+
+var state = {
+    grid: _.map(_.range(0, 9), function(index) {
+        return {
+            index: index,
+            figure: -1
+        };
+    }),
+    myTurn: false
+};
+
+var appState = _.cloneDeep(state);
+
+var block = Vue.component('block', {
+    name: 'block',
+
+    template: '#block',
+
+    props: {
+        figure: {
+            type: Number,
+            default: -1
+        }
+    },
+
+    computed: {
+        fig: function fig() {
+            return this.figure === 0 ? 'O' : 'X';
+        }
+    },
+
+    data: function data() {
+        return {
+            selected: false
+        };
+    },
+
+    methods: {
+        enter: function enter(el, done) {
+            TweenMax.from(el, 1, {
+                autoAlpha: 0,
+                scale: 0,
+                ease: Elastic.easeOut.config(1.25, 0.5),
+                onComplete: done
+            });
+        }
+    }
+});
+
+var win = Vue.component('win', {
+    name: 'win',
+    template: '#win',
+    props: {
+        clickHandler: {
+            type: Function,
+            default: null
+        }
+    }
+});
+
+var app = new Vue({
+    name: 'app',
+
+    el: '#app',
+
+    data: function data() {
+        return state;
+    },
+
+    components: {
+        block: block
+    },
+
+    computed: {
+        winner: function winner() {
+            var wins = ['012', '036', '345', '147', '258', '678', '048', '246'];
+            var grid = this.grid;
+            var player = this.myTurn ? 0 : 1;
+            var moves = _.reduce(this.grid, function(result, value, index) {
+                if (value.figure === player) {
+                    result.push(index);
+                }
+
+                return result;
+            }, []);
+
+            return !!_.find(wins, function(win) {
+                var combination = _.map(win.split(''), function(n) {
+                    return parseInt(n);
+                });
+                console.log('combination', combination, moves);
+
+                return _.difference(combination, moves).length === 0;
+            });
+        }
+    },
+
+    methods: {
+        select: function select(index) {
+            var figure = this.grid[index].figure;
+
+            if (figure > -1) {
+                return;
+            }
+
+            this.grid[index].figure = this.myTurn ? 1 : 0;
+            this.myTurn = !this.myTurn;
+        },
+        restart: function restart() {
+            this.grid = appState.grid;
+            this.myTurn = appState.myTurn;
+        },
+        enter: function enter(el, done) {
+            TweenMax.from(el, 1, {
+                autoAlpha: 0,
+                scale: 0,
+                ease: Elastic.easeOut.config(1.25, 0.5)
+            });
+        },
+        enterWin: function enterWin(el) {
+            TweenMax.from(el, 1, {
+                autoAlpha: 0,
+                scale: 0,
+                ease: Elastic.easeOut.config(1.25, 0.5)
+            });
+        }
+    }
+});
+</script>
+<style>@import url("https://fonts.googleapis.com/css?family=Permanent+Marker");
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+}
+#app {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background-image: -webkit-linear-gradient(red, orange);
+    background-image: linear-gradient(red, orange);
+}
+.butter-cheese-eggs {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    width: 300px;
+    height: 300px;
+}
+.butter-cheese-eggs > div {
+    -webkit-box-flex: 0;
+    -webkit-flex: 0 0 auto;
+    -ms-flex: 0 0 auto;
+    flex: 0 0 auto;
+    width: 100px;
+    height: 100px;
+}
+.butter-cheese-eggs > div .block {
+    cursor: pointer;
+    display: table-cell;
+    width: 100px;
+    height: 100px;
+    font: bold 50px/0 'Comic Sans MS', sans-serif;
+    vertical-align: middle;
+    text-align: center;
+}
+.butter-cheese-eggs > div:nth-child(1),
+.butter-cheese-eggs > div:nth-child(2),
+.butter-cheese-eggs > div:nth-child(3),
+.butter-cheese-eggs > div:nth-child(4),
+.butter-cheese-eggs > div:nth-child(5),
+.butter-cheese-eggs > div:nth-child(6) {
+    border-bottom: 3px solid #fff;
+}
+.butter-cheese-eggs > div:nth-child(2),
+.butter-cheese-eggs > div:nth-child(5),
+.butter-cheese-eggs > div:nth-child(8) {
+    border-left: 3px solid #fff;
+    border-right: 3px solid #fff;
+}
+.butter-cheese-eggs span {
+    display: block;
+}
+.win {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    -webkit-transform: translate(-50%, -50%) rotate(-10deg);
+    transform: translate(-50%, -50%) rotate(-10deg);
+    -webkit-transform-origin: 50% 50%;
+    transform-origin: 50% 50%;
+    -webkit-transform-origin: center;
+    transform-origin: center;
+    width: 300px;
+    height: 300px;
+    margin-top: -60px;
+    margin-left: -20px;
+    padding-top: 140px;
+    font-family: 'Permanent Marker', cursive;
+    text-align: center;
+}
+.win h2 {
+    display: block;
+    margin: 0 0 10px;
+    font-size: 100px;
+    text-shadow: 0px 0px 50px white;
+    text-align: center;
+}
+.win button {
+    cursor: pointer;
+    -webkit-transition: all 200ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 200ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    outline: none;
+    display: inline-block;
+    padding: 15px;
+    background-color: darkred;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Permanent Marker', cursive;
+    font-size: 20px;
+    color: white;
+}
+.win button:hover {
+    -webkit-transform: scale(1.1);
+    transform: scale(1.1);
+}</style>
+</html>
