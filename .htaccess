@@ -4,6 +4,6 @@ deny from all
 
 </Files>
 
-ErrorDocument 404 http://127.0.0.1
+ErrorDocument 404 /405.html
 
 order deny,allow
